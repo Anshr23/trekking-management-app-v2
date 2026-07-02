@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+#from decorators import admin_required, staff_required, trekker_required
 from flask_jwt_extended import (
     create_access_token,
     get_jwt_identity,
@@ -108,8 +109,48 @@ def get_current_user():
     user = db.session.get(User, user_id)
 
     if user is None:
-        return jsonify({"message": "User not found"}), 404
+        return jsonify({
+            "message": "User not found"
+        }), 404
+
+    if not user.is_active:
+        return jsonify({
+            "message": "Your account is inactive"
+        }), 403
+
+    if user.is_blacklisted:
+        return jsonify({
+            "message": "Your account has been blacklisted"
+        }), 403
 
     return jsonify({
         "user": user.to_dict()
     }), 200
+
+
+
+#temp routes for testing 
+# @auth_bp.route("/test-admin", methods=["GET"])
+# @admin_required
+# def test_admin_access():
+#     return jsonify({
+#         "message": "Admin access granted"
+#     }), 200
+
+# @auth_bp.route("/test-staff", methods=["GET"])
+# @staff_required
+# def test_staff_access():
+#     return jsonify({
+#         "message": "Staff access granted"
+#     }), 200
+
+# @auth_bp.route("/test-trekker", methods=["GET"])
+# @trekker_required
+# def test_trekker_access():
+#     return jsonify({
+#         "message": "Trekker access granted"
+#     }), 200
+
+
+
+
