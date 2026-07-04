@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from routes.admin import admin_bp
 
 from config import Config
 from extensions import db, jwt
@@ -7,6 +8,7 @@ from extensions import db, jwt
 from models import User
 
 from routes.auth import auth_bp
+
 
 def create_app():
     app = Flask(__name__)
@@ -19,6 +21,7 @@ def create_app():
     CORS(app)
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
 
     with app.app_context():
         db.create_all()
