@@ -709,3 +709,29 @@ def get_all_bookings():
         ]
     }), 200
 
+@admin_bp.route(
+    "/treks/<int:trek_id>/unassign-staff",
+    methods=["PUT"]
+)
+@admin_required
+def unassign_staff_from_trek(trek_id):
+    trek = db.session.get(Trek, trek_id)
+
+    if trek is None:
+        return jsonify({
+            "message": "Trek not found"
+        }), 404
+
+    if trek.assigned_staff_id is None:
+        return jsonify({
+            "message": "No staff is assigned to this trek"
+        }), 400
+
+    trek.assigned_staff_id = None
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Staff unassigned successfully",
+        "trek": trek.to_dict()
+    }), 200

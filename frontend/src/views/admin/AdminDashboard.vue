@@ -51,7 +51,7 @@
             :class="activeSection === 'staff'
               ? 'btn-dark'
               : 'btn-light'"
-            @click="activeSection = 'staff'"
+            @click="openStaff"
           >
             Trek Staff
           </button>
@@ -61,7 +61,7 @@
             :class="activeSection === 'users'
               ? 'btn-dark'
               : 'btn-light'"
-            @click="activeSection = 'users'"
+            @click="openUsers"
           >
             Users
           </button>
@@ -71,7 +71,7 @@
             :class="activeSection === 'bookings'
               ? 'btn-dark'
               : 'btn-light'"
-            @click="activeSection = 'bookings'"
+            @click="openBookings"
           >
             Bookings
           </button>
@@ -460,26 +460,504 @@
           </section>
 
           <!-- Temporary placeholders -->
-          <section v-if="activeSection === 'staff'">
+          <!-- <section v-if="activeSection === 'staff'">
             <h2>Trek Staff Management</h2>
             <p class="text-muted">
               Staff management UI will be added next.
             </p>
-          </section>
+          </section> -->
+          <section v-if="activeSection === 'staff'">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Trek Staff Management</h2>
 
-          <section v-if="activeSection === 'users'">
+        <button
+        class="btn btn-success"
+        @click="showStaffForm = !showStaffForm"
+        >
+        {{ showStaffForm ? 'Close Form' : 'Add Trek Staff' }}
+        </button>
+    </div>
+
+    <div
+        v-if="showStaffForm"
+        class="card shadow-sm mb-4"
+    >
+        <div class="card-body">
+        <h4 class="mb-3">Create Trek Staff</h4>
+
+        <form @submit.prevent="createStaff">
+            <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">
+                Full Name
+                </label>
+
+                <input
+                v-model.trim="staffForm.name"
+                class="form-control"
+                required
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Email
+                </label>
+
+                <input
+                v-model.trim="staffForm.email"
+                type="email"
+                class="form-control"
+                required
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Password
+                </label>
+
+                <input
+                v-model="staffForm.password"
+                type="password"
+                minlength="6"
+                class="form-control"
+                required
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Phone
+                </label>
+
+                <input
+                v-model.trim="staffForm.phone"
+                class="form-control"
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Experience (years)
+                </label>
+
+                <input
+                v-model.number="staffForm.experience_years"
+                type="number"
+                min="0"
+                class="form-control"
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Specialization
+                </label>
+
+                <input
+                v-model.trim="staffForm.specialization"
+                class="form-control"
+                placeholder="Example: Himalayan Treks"
+                />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">
+                Emergency Contact
+                </label>
+
+                <input
+                v-model.trim="staffForm.emergency_contact"
+                class="form-control"
+                />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">
+                Bio
+                </label>
+
+                <textarea
+                v-model.trim="staffForm.bio"
+                class="form-control"
+                rows="3"
+                ></textarea>
+            </div>
+            </div>
+
+            <button
+            type="submit"
+            class="btn btn-primary mt-3"
+            :disabled="saving"
+            >
+            {{ saving ? 'Creating...' : 'Create Staff' }}
+            </button>
+        </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+        <input
+            v-model.trim="staffSearch"
+            type="search"
+            class="form-control mb-3"
+            placeholder="Search staff by name or email"
+            @input="loadStaff"
+        />
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                <th>Staff</th>
+                <th>Experience</th>
+                <th>Specialization</th>
+                <th>Assigned Treks</th>
+                <th>Account</th>
+                <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr
+                v-for="staffMember in staffMembers"
+                :key="staffMember.id"
+                >
+                <td>
+                    <strong>{{ staffMember.name }}</strong>
+
+                    <div class="small text-muted">
+                    {{ staffMember.email }}
+                    </div>
+                </td>
+
+                <td>
+                    {{ staffMember.profile?.experience_years || 0 }} years
+                </td>
+
+                <td>
+                    {{ staffMember.profile?.specialization || 'Not specified' }}
+                </td>
+
+                <td>
+                    <div
+                    v-if="staffMember.assigned_treks.length"
+                    >
+                    <span
+                        v-for="trek in staffMember.assigned_treks"
+                        :key="trek.id"
+                        class="badge text-bg-info me-1 mb-1"
+                    >
+                        {{ trek.name }}
+                    </span>
+                    </div>
+
+                    <span
+                    v-else
+                    class="text-muted"
+                    >
+                    None
+                    </span>
+                </td>
+
+                <td>
+                    <span
+                    class="badge me-1"
+                    :class="staffMember.is_active
+                        ? 'text-bg-success'
+                        : 'text-bg-secondary'"
+                    >
+                    {{ staffMember.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+
+                    <span
+                    v-if="staffMember.is_blacklisted"
+                    class="badge text-bg-danger"
+                    >
+                    Blacklisted
+                    </span>
+                </td>
+
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                    <button
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="toggleActive(staffMember)"
+                    >
+                        {{
+                        staffMember.is_active
+                            ? 'Deactivate'
+                            : 'Activate'
+                        }}
+                    </button>
+
+                    <button
+                        class="btn btn-sm btn-outline-danger"
+                        @click="toggleBlacklist(staffMember)"
+                    >
+                        {{
+                        staffMember.is_blacklisted
+                            ? 'Unblacklist'
+                            : 'Blacklist'
+                        }}
+                    </button>
+                    </div>
+                </td>
+                </tr>
+
+                <tr v-if="staffMembers.length === 0">
+                <td
+                    colspan="6"
+                    class="text-center text-muted py-4"
+                >
+                    No staff members found.
+                </td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+        <h4 class="mb-3">Assign Staff to Trek</h4>
+
+        <form
+            class="row g-3 align-items-end"
+            @submit.prevent="assignStaff"
+        >
+            <div class="col-md-5">
+            <label class="form-label">
+                Trek
+            </label>
+
+            <select
+                v-model="assignmentForm.trek_id"
+                class="form-select"
+                required
+            >
+                <option value="">Select trek</option>
+
+                <option
+                v-for="trek in allTreks"
+                :key="trek.id"
+                :value="trek.id"
+                >
+                {{ trek.name }}
+                {{ trek.assigned_staff_name
+                    ? `— ${trek.assigned_staff_name}`
+                    : '— Not assigned' }}
+                </option>
+            </select>
+            </div>
+
+            <div class="col-md-5">
+            <label class="form-label">
+                Trek Staff
+            </label>
+
+            <select
+                v-model="assignmentForm.staff_id"
+                class="form-select"
+                required
+            >
+                <option value="">Select staff</option>
+
+                <option
+                v-for="staffMember in availableStaff"
+                :key="staffMember.id"
+                :value="staffMember.id"
+                >
+                {{ staffMember.name }}
+                </option>
+            </select>
+            </div>
+
+            <div class="col-md-2">
+            <button class="btn btn-primary w-100">
+                Assign
+            </button>
+            </div>
+        </form>
+        </div>
+    </div>
+    </section>
+
+          <!-- <section v-if="activeSection === 'users'">
             <h2>User Management</h2>
             <p class="text-muted">
               User management UI will be added next.
             </p>
-          </section>
+          </section> -->
+          <section v-if="activeSection === 'users'">
+    <h2 class="mb-4">User Management</h2>
 
-          <section v-if="activeSection === 'bookings'">
+    <div class="card shadow-sm">
+        <div class="card-body">
+        <input
+            v-model.trim="userSearch"
+            type="search"
+            class="form-control mb-3"
+            placeholder="Search trekkers by name or email"
+            @input="loadUsers"
+        />
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                <th>ID</th>
+                <th>Trekker</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th>Account</th>
+                <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr
+                v-for="trekker in trekkers"
+                :key="trekker.id"
+                >
+                <td>{{ trekker.id }}</td>
+
+                <td>
+                    <strong>{{ trekker.name }}</strong>
+
+                    <div class="small text-muted">
+                    {{ trekker.email }}
+                    </div>
+                </td>
+
+                <td>{{ trekker.phone || 'Not provided' }}</td>
+
+                <td>
+                    {{ formatDate(trekker.created_at) }}
+                </td>
+
+                <td>
+                    <span
+                    class="badge me-1"
+                    :class="trekker.is_active
+                        ? 'text-bg-success'
+                        : 'text-bg-secondary'"
+                    >
+                    {{ trekker.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+
+                    <span
+                    v-if="trekker.is_blacklisted"
+                    class="badge text-bg-danger"
+                    >
+                    Blacklisted
+                    </span>
+                </td>
+
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                    <button
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="toggleActive(trekker)"
+                    >
+                        {{
+                        trekker.is_active
+                            ? 'Deactivate'
+                            : 'Activate'
+                        }}
+                    </button>
+
+                    <button
+                        class="btn btn-sm btn-outline-danger"
+                        @click="toggleBlacklist(trekker)"
+                    >
+                        {{
+                        trekker.is_blacklisted
+                            ? 'Unblacklist'
+                            : 'Blacklist'
+                        }}
+                    </button>
+                    </div>
+                </td>
+                </tr>
+
+                <tr v-if="trekkers.length === 0">
+                <td
+                    colspan="6"
+                    class="text-center text-muted py-4"
+                >
+                    No trekkers found.
+                </td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+    </section>
+
+          <!-- <section v-if="activeSection === 'bookings'">
             <h2>All Bookings</h2>
             <p class="text-muted">
               Booking records will appear here.
             </p>
-          </section>
+          </section> -->
+          <section v-if="activeSection === 'bookings'">
+    <h2 class="mb-4">All Bookings</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                <th>ID</th>
+                <th>Trekker</th>
+                <th>Trek</th>
+                <th>Booking Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr
+                v-for="booking in bookings"
+                :key="booking.id"
+                >
+                <td>{{ booking.id }}</td>
+                <td>{{ booking.user_name }}</td>
+                <td>{{ booking.trek_name }}</td>
+                <td>{{ formatDate(booking.booking_date) }}</td>
+
+                <td>
+                    <span class="badge text-bg-primary">
+                    {{ booking.status }}
+                    </span>
+                </td>
+
+                <td>
+                    {{ booking.payment_status }}
+                </td>
+                </tr>
+
+                <tr v-if="bookings.length === 0">
+                <td
+                    colspan="6"
+                    class="text-center text-muted py-4"
+                >
+                    No booking records yet.
+                </td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+    </section>
         </main>
       </div>
     </div>
@@ -533,7 +1011,33 @@ export default {
 
       saving: false,
       message: '',
-      errorMessage: ''
+      errorMessage: '',
+      staffMembers: [],
+    staffSearch: '',
+    showStaffForm: false,
+
+    staffForm: {
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    experience_years: 0,
+    specialization: '',
+    emergency_contact: '',
+    bio: ''
+    },
+
+    allTreks: [],
+
+    assignmentForm: {
+    trek_id: '',
+    staff_id: ''
+    },
+
+    trekkers: [],
+    userSearch: '',
+
+    bookings: [],
     }
   },
 
@@ -565,6 +1069,14 @@ export default {
           value: this.stats.completed_treks
         }
       ]
+    },
+    availableStaff() {
+    return this.staffMembers.filter((staffMember) => {
+        return (
+        staffMember.is_active &&
+        !staffMember.is_blacklisted
+        )
+    })
     }
   },
 
@@ -689,10 +1201,180 @@ export default {
         this.handleError(error)
       }
     },
+    async openStaff() {
+    this.activeSection = 'staff'
+
+    await Promise.all([
+        this.loadStaff(),
+        this.loadAllTreks()
+    ])
+    },
+
+    async loadStaff() {
+    try {
+        const response = await api.get('/admin/staff', {
+        params: {
+            search: this.staffSearch
+        }
+        })
+
+        this.staffMembers = response.data.staff
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async createStaff() {
+    this.saving = true
+    this.message = ''
+    this.errorMessage = ''
+
+    try {
+        await api.post('/admin/staff', this.staffForm)
+
+        this.message = 'Trek staff created successfully.'
+        this.showStaffForm = false
+
+        this.staffForm = {
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        experience_years: 0,
+        specialization: '',
+        emergency_contact: '',
+        bio: ''
+        }
+
+        await this.loadStaff()
+        await this.loadDashboard()
+    } catch (error) {
+        this.handleError(error)
+    } finally {
+        this.saving = false
+    }
+    },
+
+    async loadAllTreks() {
+    try {
+        const response = await api.get('/admin/treks')
+        this.allTreks = response.data.treks
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async assignStaff() {
+    this.message = ''
+    this.errorMessage = ''
+
+    try {
+        await api.put(
+        `/admin/treks/${this.assignmentForm.trek_id}/assign-staff`,
+        {
+            staff_id: this.assignmentForm.staff_id
+        }
+        )
+
+        this.message = 'Staff assigned to trek successfully.'
+
+        this.assignmentForm = {
+        trek_id: '',
+        staff_id: ''
+        }
+
+        await Promise.all([
+        this.loadStaff(),
+        this.loadAllTreks()
+        ])
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async openUsers() {
+    this.activeSection = 'users'
+    await this.loadUsers()
+    },
+
+    async loadUsers() {
+    try {
+        const response = await api.get('/admin/users', {
+        params: {
+            search: this.userSearch
+        }
+        })
+
+        this.trekkers = response.data.users
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async toggleActive(user) {
+    try {
+        const response = await api.put(
+        `/admin/users/${user.id}/toggle-active`
+        )
+
+        this.message = response.data.message
+
+        if (user.role === 'staff') {
+        await this.loadStaff()
+        } else {
+        await this.loadUsers()
+        }
+
+        await this.loadDashboard()
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async toggleBlacklist(user) {
+    try {
+        const response = await api.put(
+        `/admin/users/${user.id}/toggle-blacklist`
+        )
+
+        this.message = response.data.message
+
+        if (user.role === 'staff') {
+        await this.loadStaff()
+        } else {
+        await this.loadUsers()
+        }
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    async openBookings() {
+    this.activeSection = 'bookings'
+    await this.loadBookings()
+    },
+
+    async loadBookings() {
+    try {
+        const response = await api.get('/admin/bookings')
+        this.bookings = response.data.bookings
+    } catch (error) {
+        this.handleError(error)
+    }
+    },
+
+    formatDate(dateValue) {
+    if (!dateValue) {
+        return '-'
+    }
+
+    return new Date(dateValue).toLocaleDateString()
+    },
 
     handleError(error) {
-      this.errorMessage =
+    this.errorMessage =
         error.response?.data?.message ||
+        error.response?.data?.msg ||
         'Something went wrong. Please try again.'
     },
 
