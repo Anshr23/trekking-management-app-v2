@@ -9,7 +9,7 @@ from extensions import db, jwt
 from models import User
 
 from routes.auth import auth_bp
-
+from routes.staff import staff_bp
 
 def create_app():
     app = Flask(__name__)
@@ -24,6 +24,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(trekker_bp)
+    app.register_blueprint(staff_bp)
 
     with app.app_context():
         db.create_all()
