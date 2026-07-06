@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from routes.admin import admin_bp
+from routes.trekker import trekker_bp
 
 from config import Config
 from extensions import db, jwt
@@ -22,6 +23,7 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(trekker_bp)
 
     with app.app_context():
         db.create_all()
