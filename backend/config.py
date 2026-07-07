@@ -13,3 +13,12 @@ class Config:
     JWT_SECRET_KEY = "trekking-management-secret-key"
 
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=2)
+
+    #for celery
+    CELERY_BROKER_URL = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+
+    REDIS_URL = "redis://localhost:6379/1"
+
+    EXPORT_FOLDER = os.path.join(BASE_DIR, "exports")
+    REPORT_FOLDER = os.path.join(BASE_DIR, "reports")

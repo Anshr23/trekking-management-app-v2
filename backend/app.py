@@ -11,15 +11,31 @@ from models import User
 from routes.auth import auth_bp
 from routes.staff import staff_bp
 
+import os
+
+from celery_app import init_celery
+
 def create_app():
     app = Flask(__name__)
 
     app.config.from_object(Config)
 
+    os.makedirs(
+        app.config["EXPORT_FOLDER"],
+        exist_ok=True
+    )
+
+    os.makedirs(
+        app.config["REPORT_FOLDER"],
+        exist_ok=True
+    )
+
     db.init_app(app)
     jwt.init_app(app)
-
     CORS(app)
+
+    init_celery(app)
+    #celery.flask_app = app
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
@@ -63,4 +79,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001, use_reloader=False)

@@ -7,6 +7,14 @@ from decorators import role_required
 from extensions import db
 from models import User, Trek, Booking
 
+import os
+
+from celery.result import AsyncResult
+from flask import send_from_directory
+
+from celery_app import celery
+from tasks import export_user_booking_history
+
 
 trekker_bp = Blueprint(
     "trekker",
@@ -280,3 +288,90 @@ def update_profile():
         "message": "Profile updated successfully",
         "user": user.to_dict()
     }), 200
+
+
+@trekker_bp.route("/export-history", methods=["POST"])
+@role_required("trekker")
+def start_history_export():
+    user = get_current_trekker()
+
+    task = export_user_booking_history.delay(user.id)
+
+    return jsonify({
+        "message": "CSV export started",
+        "task_id": task.id
+    }), 202
+
+
+@trekker_bp.route(
+    "/export-history/<task_id>/status",
+    methods=["GET"]
+)
+@role_required("trekker")
+def get_export_status(task_id):
+    user = get_current_trekker()
+
+    task = AsyncResult(
+        task_id,
+        app=celery
+    )
+
+    if not task.ready():
+        return jsonify({
+            "status": task.status,
+            "ready": False
+        }), 200
+
+    if task.failed():
+        return jsonify({
+            "status": "FAILURE",
+            "ready": True,
+            "message": "CSV export failed"
+        }), 500
+
+    result = task.result
+
+    if result.get("user_id") != user.id:
+        return jsonify({
+            "message": "You cannot access this export"
+        }), 403
+
+    return jsonify({
+        "status": "SUCCESS",
+        "ready": True,
+        "message": "CSV export is ready",
+        "filename": result["filename"]
+    }), 200
+
+
+@trekker_bp.route(
+    "/export-history/download/<filename>",
+    methods=["GET"]
+)
+@role_required("trekker")
+def download_history_export(filename):
+    user = get_current_trekker()
+
+    expected_filename = (
+        f"trekking_history_user_{user.id}.csv"
+    )
+
+    if filename != expected_filename:
+        return jsonify({
+            "message": "You cannot access this file"
+        }), 403
+
+    export_folder = celery.flask_app.config["EXPORT_FOLDER"]
+
+    if not os.path.exists(
+        os.path.join(export_folder, filename)
+    ):
+        return jsonify({
+            "message": "Export file not found"
+        }), 404
+
+    return send_from_directory(
+        export_folder,
+        filename,
+        as_attachment=True
+    )

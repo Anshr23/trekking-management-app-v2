@@ -353,7 +353,26 @@
 
       <!-- History -->
       <section v-if="activeSection === 'history'">
-        <h2 class="mb-4">Trekking History</h2>
+        <div
+        class="d-flex justify-content-between
+                align-items-center mb-4"
+        >
+        <h2 class="mb-0">
+            Trekking History
+        </h2>
+
+        <button
+            class="btn btn-success"
+            :disabled="exporting"
+            @click="exportHistory"
+        >
+            {{
+            exporting
+                ? 'Preparing CSV...'
+                : 'Export History CSV'
+            }}
+        </button>
+        </div>
 
         <div class="card shadow-sm">
           <div class="card-body">
@@ -514,7 +533,8 @@ export default {
 
       saving: false,
       message: '',
-      errorMessage: ''
+      errorMessage: '',
+      exporting: false,
     }
   },
 
@@ -732,8 +752,88 @@ export default {
       localStorage.removeItem('user')
 
       this.$router.push('/login')
-    }
-  }
+    },
+
+    async exportHistory() {
+        this.exporting = true
+        this.clearMessages()
+
+        try {
+            const response = await api.post(
+            '/trekker/export-history'
+            )
+
+            const taskId = response.data.task_id
+
+            this.message = 'CSV export started. Please wait...'
+
+            this.checkExportStatus(taskId)
+        } catch (error) {
+            this.exporting = false
+            this.handleError(error)
+        }
+        },
+
+        async checkExportStatus(taskId) {
+        try {
+            const response = await api.get(
+            `/trekker/export-history/${taskId}/status`
+            )
+
+            if (!response.data.ready) {
+            setTimeout(() => {
+                this.checkExportStatus(taskId)
+            }, 1500)
+
+            return
+            }
+
+            this.exporting = false
+
+            this.message = (
+            'CSV export completed successfully. ' +
+            'Downloading file...'
+            )
+
+            await this.downloadExport(
+            response.data.filename
+            )
+        } catch (error) {
+            this.exporting = false
+            this.handleError(error)
+        }
+        },
+
+        async downloadExport(filename) {
+        try {
+            const response = await api.get(
+            `/trekker/export-history/download/${filename}`,
+            {
+                responseType: 'blob'
+            }
+            )
+
+            const fileUrl = window.URL.createObjectURL(
+            new Blob([response.data])
+            )
+
+            const link = document.createElement('a')
+
+            link.href = fileUrl
+            link.setAttribute('download', filename)
+
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+
+            window.URL.revokeObjectURL(fileUrl)
+        } catch (error) {
+            this.handleError(error)
+        }
+        },
+
+  
+}
 }
 </script>
 
