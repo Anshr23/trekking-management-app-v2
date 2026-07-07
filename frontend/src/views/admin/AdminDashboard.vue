@@ -905,11 +905,36 @@
               Booking records will appear here.
             </p>
           </section> -->
-          <section v-if="activeSection === 'bookings'">
-    <h2 class="mb-4">All Bookings</h2>
+         <section v-if="activeSection === 'bookings'">
+    <h2 class="mb-4">All Bookings & Trekking History</h2>
 
     <div class="card shadow-sm">
         <div class="card-body">
+        <div class="row g-2 mb-3">
+            <div class="col-md-8">
+            <input
+                v-model.trim="bookingSearch"
+                type="search"
+                class="form-control"
+                placeholder="Search by trekker, email, trek or location"
+                @input="loadBookings"
+            />
+            </div>
+
+            <div class="col-md-4">
+            <select
+                v-model="bookingStatusFilter"
+                class="form-select"
+                @change="loadBookings"
+            >
+                <option value="">All booking statuses</option>
+                <option value="Booked">Booked</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Completed">Completed</option>
+            </select>
+            </div>
+        </div>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle">
             <thead>
@@ -917,6 +942,7 @@
                 <th>ID</th>
                 <th>Trekker</th>
                 <th>Trek</th>
+                <th>Location</th>
                 <th>Booking Date</th>
                 <th>Status</th>
                 <th>Payment</th>
@@ -929,12 +955,32 @@
                 :key="booking.id"
                 >
                 <td>{{ booking.id }}</td>
-                <td>{{ booking.user_name }}</td>
-                <td>{{ booking.trek_name }}</td>
-                <td>{{ formatDate(booking.booking_date) }}</td>
 
                 <td>
-                    <span class="badge text-bg-primary">
+                    <strong>
+                    {{ booking.user_name }}
+                    </strong>
+
+                    <div class="small text-muted">
+                    User ID: {{ booking.user_id }}
+                    </div>
+                </td>
+
+                <td>{{ booking.trek_name }}</td>
+
+                <td>
+                    {{ booking.location || '-' }}
+                </td>
+
+                <td>
+                    {{ formatDate(booking.booking_date) }}
+                </td>
+
+                <td>
+                    <span
+                    class="badge"
+                    :class="bookingStatusClass(booking.status)"
+                    >
                     {{ booking.status }}
                     </span>
                 </td>
@@ -946,10 +992,10 @@
 
                 <tr v-if="bookings.length === 0">
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="text-center text-muted py-4"
                 >
-                    No booking records yet.
+                    No booking records found.
                 </td>
                 </tr>
             </tbody>
@@ -1038,6 +1084,8 @@ export default {
     userSearch: '',
 
     bookings: [],
+    bookingSearch: '',
+    bookingStatusFilter: '',
     }
   },
 
@@ -1356,11 +1404,29 @@ export default {
 
     async loadBookings() {
     try {
-        const response = await api.get('/admin/bookings')
+        const response = await api.get('/admin/bookings', {
+        params: {
+            search: this.bookingSearch,
+            status: this.bookingStatusFilter
+        }
+        })
+
         this.bookings = response.data.bookings
     } catch (error) {
         this.handleError(error)
     }
+    },
+
+    bookingStatusClass(status) {
+        if (status === 'Completed') {
+            return 'text-bg-success'
+        }
+
+        if (status === 'Cancelled') {
+            return 'text-bg-secondary'
+        }
+
+        return 'text-bg-primary'
     },
 
     formatDate(dateValue) {

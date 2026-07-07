@@ -688,15 +688,36 @@ def toggle_user_blacklist(user_id):
     }), 200
 
 
+
+
 @admin_bp.route("/bookings", methods=["GET"])
 @admin_required
 def get_all_bookings():
     status = request.args.get("status", "").strip()
+    search = request.args.get("search", "").strip()
 
-    query = Booking.query
+    query = Booking.query.join(
+        User,
+        Booking.user_id == User.id
+    ).join(
+        Trek,
+        Booking.trek_id == Trek.id
+    )
 
     if status:
-        query = query.filter_by(status=status)
+        query = query.filter(
+            Booking.status == status
+        )
+
+    if search:
+        query = query.filter(
+            db.or_(
+                User.name.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+                Trek.name.ilike(f"%{search}%"),
+                Trek.location.ilike(f"%{search}%")
+            )
+        )
 
     bookings = query.order_by(
         Booking.booking_date.desc()
@@ -708,6 +729,9 @@ def get_all_bookings():
             for booking in bookings
         ]
     }), 200
+
+
+
 
 @admin_bp.route(
     "/treks/<int:trek_id>/unassign-staff",
