@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from decorators import role_required
-from extensions import db
+from extensions import db, cache
 from models import User, Trek, Booking
 
 
@@ -188,6 +188,7 @@ def update_trek_slots(trek_id):
     trek.available_slots = new_total_slots - booked_slots
 
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": "Trek slots updated successfully",
@@ -251,6 +252,7 @@ def update_trek_status(trek_id):
             booking.status = "Completed"
 
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": f"Trek status updated to {new_status}",

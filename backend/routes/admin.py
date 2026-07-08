@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from decorators import admin_required
-from extensions import db
+from extensions import db, cache
 from models import User, StaffProfile, Trek, Booking
 
 
@@ -180,6 +180,7 @@ def create_trek():
 
     db.session.add(trek)
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": "Trek created successfully",
@@ -349,6 +350,7 @@ def update_trek(trek_id):
         trek.image_url = str(data["image_url"]).strip()
 
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": "Trek updated successfully",
@@ -373,6 +375,7 @@ def delete_trek(trek_id):
 
     db.session.delete(trek)
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": "Trek deleted successfully"
@@ -494,6 +497,7 @@ def create_staff():
     db.session.add(profile)
     db.session.commit()
 
+
     return jsonify({
         "message": "Trek staff created successfully",
         "staff": staff.to_dict(),
@@ -605,6 +609,7 @@ def assign_staff_to_trek(trek_id):
         trek.status = "Approved"
 
     db.session.commit()
+    cache.clear()
 
     return jsonify({
         "message": "Staff assigned to trek successfully",

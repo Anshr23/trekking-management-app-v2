@@ -4,7 +4,7 @@ from routes.admin import admin_bp
 from routes.trekker import trekker_bp
 
 from config import Config
-from extensions import db, jwt
+from extensions import db, jwt, mail, cache
 
 from models import User
 
@@ -32,6 +32,8 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
+    mail.init_app(app)
+    cache.init_app(app)
     CORS(app)
 
     init_celery(app)

@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from decorators import role_required
-from extensions import db
+from extensions import db, cache
 from models import User, Trek, Booking
 
 import os
@@ -61,6 +61,10 @@ def get_dashboard():
 
 @trekker_bp.route("/treks", methods=["GET"])
 @role_required("trekker")
+@cache.cached(
+    timeout=300,
+    query_string=True
+)
 def get_available_treks():
     search = request.args.get("search", "").strip()
     difficulty = request.args.get("difficulty", "").strip()

@@ -5,8 +5,10 @@ from datetime import date, timedelta
 from celery.schedules import crontab
 
 from celery_app import celery
-from extensions import db
+from flask_mail import Message
+from extensions import db, mail
 from models import User, Trek, Booking
+
 
 
 @celery.task
@@ -36,9 +38,29 @@ def send_daily_trek_reminders():
 
             reminders.append(reminder)
 
+            message = Message(
+                subject=f"Upcoming Trek Reminder - {trek.name}",
+                recipients=[booking.user.email]
+            )
+
+            message.body = (
+                f"Hello {booking.user.name},\n\n"
+                f"This is a reminder that your trek "
+                f"'{trek.name}' is starting on {trek.start_date}.\n\n"
+                f"Location: {trek.location}\n"
+                f"Difficulty: {trek.difficulty}\n"
+                f"Duration: {trek.duration} days\n\n"
+                f"Please make sure you are prepared and follow "
+                f"all trek instructions.\n\n"
+                f"Regards,\n"
+                f"Trekking Management Team"
+            )
+
+            mail.send(message)
+
             print(
-                f"REMINDER: {booking.user.email} - "
-                f"{trek.name} starts on {trek.start_date}"
+                f"Reminder email sent to {booking.user.email} "
+                f"for {trek.name}"
             )
 
     return {
@@ -139,6 +161,28 @@ def generate_monthly_admin_report():
         report_file.write(report_html)
 
     print(f"Monthly Admin report generated: {filepath}")
+
+    admin = User.query.filter_by(role="admin").first()
+
+    if admin:
+        message = Message(
+            subject=(
+                f"Monthly Trekking Activity Report - "
+                f"{previous_month}/{previous_year}"
+            ),
+            recipients=[
+                celery.flask_app.config["ADMIN_REPORT_EMAIL"]
+            ]
+        )
+
+        message.html = report_html
+
+        mail.send(message)
+
+        print(
+            "Monthly report email sent to "
+            f"{celery.flask_app.config['ADMIN_REPORT_EMAIL']}"
+        )
 
     return {
         "message": "Monthly Admin report generated successfully",
