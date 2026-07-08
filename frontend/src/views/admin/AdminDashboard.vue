@@ -127,6 +127,60 @@
                 </div>
               </div>
             </div>
+            <div class="mt-5">
+              <h3 class="mb-4">Analytics Overview</h3>
+
+              <div class="row g-4">
+                <div class="col-lg-6">
+                  <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">Trek Popularity</h5>
+
+                      <div class="chart-container">
+                        <canvas ref="popularityCanvas"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">Booking Status</h5>
+
+                      <div class="chart-container">
+                        <canvas ref="bookingStatusCanvas"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">Monthly Booking Trends</h5>
+
+                      <div class="chart-container">
+                        <canvas ref="monthlyBookingsCanvas"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-6">
+                  <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">Trek Status Distribution</h5>
+
+                      <div class="chart-container">
+                        <canvas ref="trekStatusCanvas"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </section>
 
           <!-- Treks -->
@@ -1013,6 +1067,105 @@
 <script>
 import api from '../../services/api'
 
+// import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import Chart from 'chart.js/auto'
+const charts = []
+
+const loadAnalytics = async () => {
+  try {
+    const response = await api.get('/admin/analytics')
+    const data = response.data
+
+    await nextTick()
+
+    charts.push(
+      new Chart(popularityCanvas.value, {
+        type: 'bar',
+        data: {
+          labels: data.trek_popularity.map(item => item.trek_name),
+          datasets: [{
+            label: 'Total Bookings',
+            data: data.trek_popularity.map(item => item.bookings),
+            backgroundColor: '#198754'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
+    )
+
+    charts.push(
+      new Chart(bookingStatusCanvas.value, {
+        type: 'doughnut',
+        data: {
+          labels: data.booking_statuses.map(item => item.status),
+          datasets: [{
+            data: data.booking_statuses.map(item => item.count),
+            backgroundColor: [
+              '#0d6efd',
+              '#dc3545',
+              '#198754',
+              '#ffc107'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
+    )
+
+    charts.push(
+      new Chart(monthlyBookingsCanvas.value, {
+        type: 'line',
+        data: {
+          labels: data.monthly_bookings.map(item => item.month),
+          datasets: [{
+            label: 'Bookings',
+            data: data.monthly_bookings.map(item => item.bookings),
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.15)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
+    )
+
+    charts.push(
+      new Chart(trekStatusCanvas.value, {
+        type: 'pie',
+        data: {
+          labels: data.trek_statuses.map(item => item.status),
+          datasets: [{
+            data: data.trek_statuses.map(item => item.count),
+            backgroundColor: [
+              '#198754',
+              '#0dcaf0',
+              '#6c757d',
+              '#ffc107',
+              '#dc3545'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      })
+    )
+  } catch (error) {
+    console.error('Failed to load analytics:', error)
+  }
+}
+
 function emptyTrekForm() {
   return {
     name: '',
@@ -1128,11 +1281,116 @@ export default {
     }
   },
 
+  // async mounted() {
+  //   await this.loadDashboard()
+  //   await this.loadAnalytics()
+  // },
   async mounted() {
     await this.loadDashboard()
+    await this.loadAnalytics()
+  },
+
+  beforeUnmount() {
+    charts.forEach(chart => chart.destroy())
+    charts.length = 0
   },
 
   methods: {
+    async loadAnalytics() {
+      try {
+        const response = await api.get('/admin/analytics')
+        const data = response.data
+
+        // Use Vue's built-in options API nextTick
+        await this.$nextTick()
+
+        charts.push(
+          new Chart(this.$refs.popularityCanvas, {
+            type: 'bar',
+            data: {
+              labels: data.trek_popularity.map(item => item.trek_name),
+              datasets: [{
+                label: 'Total Bookings',
+                data: data.trek_popularity.map(item => item.bookings),
+                backgroundColor: '#198754'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          })
+        )
+
+        charts.push(
+          new Chart(this.$refs.bookingStatusCanvas, {
+            type: 'doughnut',
+            data: {
+              labels: data.booking_statuses.map(item => item.status),
+              datasets: [{
+                data: data.booking_statuses.map(item => item.count),
+                backgroundColor: [
+                  '#0d6efd',
+                  '#dc3545',
+                  '#198754',
+                  '#ffc107'
+                ]
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          })
+        )
+
+        charts.push(
+          new Chart(this.$refs.monthlyBookingsCanvas, {
+            type: 'line',
+            data: {
+              labels: data.monthly_bookings.map(item => item.month),
+              datasets: [{
+                label: 'Bookings',
+                data: data.monthly_bookings.map(item => item.bookings),
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.15)',
+                fill: true,
+                tension: 0.3
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          })
+        )
+
+        charts.push(
+          new Chart(this.$refs.trekStatusCanvas, {
+            type: 'pie',
+            data: {
+              labels: data.trek_statuses.map(item => item.status),
+              datasets: [{
+                data: data.trek_statuses.map(item => item.count),
+                backgroundColor: [
+                  '#198754',
+                  '#0dcaf0',
+                  '#6c757d',
+                  '#ffc107',
+                  '#dc3545'
+                ]
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          })
+        )
+      } catch (error) {
+        console.error('Failed to load analytics:', error)
+      }
+    },
     async loadDashboard() {
       try {
         const response = await api.get('/admin/dashboard')
@@ -1463,6 +1721,12 @@ export default {
 .sidebar {
   min-height: calc(100vh - 56px);
   border-right: 1px solid #dee2e6;
+}
+
+.chart-container {
+  position: relative;
+  height: 320px;
+  width: 100%;
 }
 
 @media (max-width: 767px) {

@@ -6,6 +6,7 @@ from decorators import admin_required
 from extensions import db, cache
 from models import User, StaffProfile, Trek, Booking
 
+from sqlalchemy import func
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -763,4 +764,91 @@ def unassign_staff_from_trek(trek_id):
     return jsonify({
         "message": "Staff unassigned successfully",
         "trek": trek.to_dict()
+    }), 200
+
+
+#for analytics and charts and all
+@admin_bp.route("/analytics", methods=["GET"])
+@admin_required
+def get_admin_analytics():
+    # Trek popularity based on number of bookings
+    trek_popularity = (
+        db.session.query(
+            Trek.name,
+            func.count(Booking.id)
+        )
+        .outerjoin(Booking, Booking.trek_id == Trek.id)
+        .group_by(Trek.id, Trek.name)
+        .order_by(func.count(Booking.id).desc())
+        .all()
+    )
+
+    popularity_data = []
+    for trek_name, booking_count in trek_popularity:
+        popularity_data.append({
+            "trek_name": trek_name,
+            "bookings": booking_count
+        })
+
+    # Booking status distribution
+    booking_statuses = (
+        db.session.query(
+            Booking.status,
+            func.count(Booking.id)
+        )
+        .group_by(Booking.status)
+        .all()
+    )
+
+    booking_status_data = []
+    for status, count in booking_statuses:
+        booking_status_data.append({
+            "status": status,
+            "count": count
+        })
+
+    # Monthly booking trend
+    monthly_bookings = (
+        db.session.query(
+            func.strftime("%Y-%m", Booking.booking_date),
+            func.count(Booking.id)
+        )
+        .group_by(
+            func.strftime("%Y-%m", Booking.booking_date)
+        )
+        .order_by(
+            func.strftime("%Y-%m", Booking.booking_date)
+        )
+        .all()
+    )
+
+    monthly_data = []
+    for month, count in monthly_bookings:
+        monthly_data.append({
+            "month": month,
+            "bookings": count
+        })
+
+    # Trek status distribution
+    trek_statuses = (
+        db.session.query(
+            Trek.status,
+            func.count(Trek.id)
+        )
+        .group_by(Trek.status)
+        .all()
+    )
+
+    trek_status_data = []
+    for status, count in trek_statuses:
+        trek_status_data.append({
+            "status": status,
+            "count": count
+        })
+
+    return jsonify({
+        "trek_popularity": popularity_data,
+        "booking_statuses": booking_status_data,
+        "monthly_bookings": monthly_data,
+        "trek_statuses": trek_status_data
     }), 200
