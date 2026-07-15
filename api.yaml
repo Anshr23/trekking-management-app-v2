@@ -1,0 +1,18 @@
+POST   /api/auth/login
+POST   /api/auth/register
+
+GET    /api/admin/dashboard
+GET    /api/admin/analytics
+GET    /api/admin/treks
+POST   /api/admin/treks
+PUT    /api/admin/treks/<id>
+DELETE /api/admin/treks/<id>
+
+GET    /api/admin/staff
+POST   /api/admin/staff
+PUT    /api/admin/treks/<id>/assign-staff
+
+GET    /api/trekker/dashboard
+GET    /api/trekker/treks
+GET    /api/trekker/history
+POST   /api/trekker/export-history
