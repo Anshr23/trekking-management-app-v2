@@ -2,281 +2,373 @@
 
 Trekking Management Application V2 (TMA-V2) is a full-stack web application developed as part of the Modern Application Development II course.
 
-The application provides a centralized platform for managing trekking activities involving three different types of users:
+The application provides a centralized platform for managing trekking activities involving three types of users: Admin, Trek Staff, and Trekker. Administrators can manage treks, staff members, users, bookings, and analytics, while Trek Staff can manage their assigned treks and participants. Trekkers can explore available treks, make bookings, manage their bookings, and view their trekking history.
 
-- Admin
-- Trek Staff
-- Trekker
+---
 
-The system allows administrators to manage treks, staff members, users, bookings, and analytics. Trek Staff can manage their assigned treks and participants, while Trekkers can explore available treks, make bookings, track booking status, and view their complete trekking history.
+## Screenshots
+
+### Home Page
+
+<p align="center">
+  <img src="./frontend/public/__________.png" alt="Trekking Management Application home page" width="700" />
+</p>
+
+### Admin Dashboard
+
+<p align="center">
+  <img src="./frontend/public/__________.png" alt="Trekking Management Application admin dashboard" width="700" />
+</p>
 
 ---
 
 ## Features
 
-### Admin
+TMA-V2 provides role-based trekking management, booking, analytics, and automated background processing.
 
-- Pre-created Admin account with no public registration.
-- Dashboard showing total treks, trekkers, staff members, bookings, active treks, and completed treks.
-- Create, update, delete, search, and filter treks.
-- Create and manage Trek Staff accounts.
-- Assign Trek Staff members to specific treks.
-- View and manage all registered users.
-- Deactivate or blacklist users and staff members.
-- View all booking records.
-- View analytics and trekking statistics using interactive charts.
+### Admin Features
 
-### Trek Staff
+* **Protected Admin Dashboard:** Manage the trekking platform through the admin dashboard.
+* **Trek Management:** Create, update, delete, search, and filter treks.
+* **Staff Management:** Create and manage Trek Staff accounts.
+* **Staff Assignment:** Assign Trek Staff members to specific treks.
+* **User Management:** View registered users and manage their account status.
+* **Account Controls:** Deactivate or blacklist users and staff members.
+* **Booking Management:** View and manage all booking records.
+* **Analytics Dashboard:** View trekking and booking statistics using interactive Chart.js visualizations.
 
-- Login using an account created by the Admin.
-- View only the treks assigned by the Admin.
-- View the number of registered participants for assigned treks.
-- View and manage participant lists.
-- Update available trek slots.
-- Update trek status.
-- Mark treks as started or completed.
-- Access restrictions ensure that staff members can manage only their assigned treks.
+### Trek Staff Features
 
-### Trekker
+* **Staff Authentication:** Login using an account created by the Admin.
+* **Assigned Treks:** View only the treks assigned to the logged-in staff member.
+* **Participant Management:** View participants registered for assigned treks.
+* **Trek Updates:** Update available slots and trek status.
+* **Trek Progress:** Mark assigned treks as started or completed.
+* **Access Control:** Staff members can only manage their assigned treks.
 
-- Self-registration and login.
-- View available and open treks.
-- Search and filter treks by difficulty, location, and duration.
-- Book available treks.
-- View current bookings and booking status.
-- Cancel bookings where applicable.
-- View complete trekking history.
-- Update profile information.
-- Export trekking history as a CSV file.
+### Trekker Features
 
----
-
-## Core Functionalities
-
-- JWT-based authentication and authorization.
-- Role-based access control for Admin, Trek Staff, and Trekkers.
-- Unified User model for all three roles.
-- Prevention of duplicate trek bookings.
-- Prevention of overbooking beyond available slots.
-- Booking allowed only when a trek is Open.
-- Complete booking and trekking history management.
-- Staff-level access restrictions for assigned treks.
-- Search and filtering functionality.
-- Backend and frontend validation.
-- Responsive user interface.
+* **Self Registration:** Create a trekker account.
+* **Secure Login:** Login using registered credentials.
+* **Trek Discovery:** Browse available and open treks.
+* **Search and Filtering:** Filter treks by difficulty, location, and duration.
+* **Trek Booking:** Book available treks while preventing duplicate bookings and overbooking.
+* **Booking Management:** View booking status and cancel bookings where applicable.
+* **Trekking History:** View complete previous and current trekking activity.
+* **Profile Management:** Update personal profile information.
+* **CSV Export:** Export complete trekking history as a CSV file.
 
 ---
 
 ## Background Jobs
 
-The application uses Celery with Redis to implement asynchronous and scheduled background jobs.
+The application uses Celery with Redis to handle asynchronous and scheduled background tasks.
 
 ### Daily Trek Reminders
 
-A scheduled Celery task checks for upcoming treks and sends email reminders to registered participants with trek information and the scheduled start date.
+A scheduled Celery task checks for upcoming treks and sends email reminders to registered participants containing relevant trek information and the scheduled start date.
 
 ### Monthly Admin Activity Report
 
-A scheduled task generates a monthly HTML activity report containing:
+A scheduled background task generates a monthly HTML activity report containing:
 
-- Number of treks conducted.
-- Total number of participants.
-- Most popular trek.
+* Number of treks conducted.
+* Total number of participants.
+* Most popular trek.
 
 The generated report is automatically sent to the Admin through email.
 
 ### Asynchronous CSV Export
 
-Trekkers can trigger an asynchronous job to export their complete trekking history as a CSV file.
+Trekkers can export their complete trekking history as a CSV file.
 
 The export contains:
 
-- User ID
-- Trek name
-- Location
-- Booking status
-- Booking date
-- Trek start date
-- Trek end date
+* User ID
+* Trek name
+* Location
+* Booking status
+* Booking date
+* Trek start date
+* Trek end date
 
-The Celery worker processes the export asynchronously and the user is notified when the file is ready.
+The CSV generation is handled asynchronously by a Celery worker so that the main Flask application is not blocked while the file is being generated.
 
 ---
 
 ## Redis Caching
 
-Redis caching is used to improve API performance for frequently accessed trek data.
+Redis is used to improve application performance by caching frequently accessed trek-related data.
 
 The implementation includes:
 
-- Caching of frequently accessed trek listings.
-- Cache expiration.
-- Cache invalidation when trek information is modified.
-- Redis as the Celery message broker and result backend.
+* Caching of frequently accessed trek listings.
+* Cache expiration.
+* Cache invalidation when trek information is modified.
+* Redis as the Celery message broker.
+* Redis as the Celery result backend.
 
 ---
 
 ## Analytics
 
-The Admin dashboard includes analytics and visualizations implemented using Chart.js.
+The Admin dashboard provides interactive analytics and visualizations using Chart.js.
 
 Available analytics include:
 
-- Trek popularity.
-- Booking status distribution.
-- Monthly booking trends.
-- Trek status distribution.
+* Trek popularity.
+* Booking status distribution.
+* Monthly booking trends.
+* Trek status distribution.
 
 ---
 
 ## Technology Stack
 
 | Technology / Library | Purpose |
-|---|---|
-| Flask | REST API backend framework |
-| Vue.js | Frontend user interface |
-| SQLAlchemy | Object Relational Mapper for database operations |
-| SQLite | Relational database |
-| Bootstrap 5 | Responsive frontend styling |
-| JWT / Flask-JWT-Extended | Authentication and role-based authorization |
-| Axios | Communication between Vue.js frontend and Flask APIs |
-| Redis | API caching and Celery message broker |
-| Celery | Asynchronous background jobs |
-| Celery Beat | Scheduled background tasks |
-| Flask-Mail | Email reminders and monthly Admin reports |
-| Flask-Caching | Redis-based API caching |
-| Chart.js | Admin analytics and data visualization |
-| Flask-CORS | Cross-origin communication between frontend and backend |
+| :--- | :--- |
+| **Flask** | REST API backend framework |
+| **Vue.js 3** | Frontend user interface |
+| **Vite** | Frontend development and build tool |
+| **SQLAlchemy** | Object Relational Mapper for database operations |
+| **SQLite** | Relational database |
+| **Bootstrap 5** | Responsive frontend styling |
+| **Flask-JWT-Extended** | JWT-based authentication and authorization |
+| **Axios** | Communication between Vue.js frontend and Flask APIs |
+| **Redis** | API caching and Celery message broker |
+| **Celery** | Asynchronous background jobs |
+| **Celery Beat** | Scheduled background tasks |
+| **Flask-Mail** | Email reminders and monthly Admin reports |
+| **Flask-Caching** | Redis-based API caching |
+| **Chart.js** | Admin analytics and data visualization |
+| **Flask-CORS** | Cross-origin communication between frontend and backend |
 
 ---
 
 ## Database Models
 
-The application uses four main database tables:
+The application uses SQLAlchemy ORM models to represent the main database entities.
 
 ### User
-
-Stores account and authentication information for Admin, Trek Staff, and Trekkers.
+Stores authentication and account information for Admin, Trek Staff, and Trekkers.  
+The User model also stores role, account status, blacklist status, and timestamps.
 
 ### Staff Profile
+Stores additional information specific to Trek Staff members, including:
 
-Stores additional information about Trek Staff members, including experience, specialization, emergency contact, biography, and status.
+* Experience
+* Specialization
+* Emergency contact
+* Biography
+* Staff status
 
 ### Trek
+Stores trekking event information such as:
 
-Stores trekking event information such as trek name, location, difficulty, duration, altitude, slots, price, assigned staff, status, and dates.
+* Trek name
+* Location
+* Difficulty
+* Duration
+* Altitude
+* Available slots
+* Price
+* Assigned staff
+* Trek status
+* Start and end dates
 
 ### Booking
-
-Stores booking records connecting Trekkers with treks and maintains booking status and trekking history.
-
----
-
-## Authentication and Roles
-
-The application uses JWT-based authentication.
-
-After successful login, a JWT access token is generated and sent with protected API requests.
-
-The three supported roles are:
-
-1. Admin
-2. Trek Staff
-3. Trekker
-
-Each role has access only to authorized resources and operations.
+Stores the relationship between Trekkers and Treks and maintains booking information and booking status.
 
 ---
 
-## Running the Application
+## Authentication and Authorization
 
-### 1. Start Redis
+The application uses JWT-based authentication with role-based access control.
 
-```bash
-redis-server
-Verify Redis:
+After successful login, the Flask backend generates a JWT access token. The frontend stores the token in browser Local Storage and sends it with protected API requests using the `Authorization: Bearer <token>` header.
 
-redis-cli ping
+The application supports three roles:
+* **Admin**
+* **Trek Staff**
+* **Trekker**
 
-Expected output:
+Role-based decorators restrict access to resources according to the user's role.
 
-PONG
-2. Start the Flask Backend
+---
 
-Navigate to the backend directory:
-
-cd backend
-
-Activate the virtual environment:
-
-source env/bin/activate
-
-Run the Flask application:
-
-python app.py
-
-The backend runs at:
-
-http://127.0.0.1:5001
-3. Start the Vue.js Frontend
-
-Navigate to the frontend directory:
-
-cd frontend
-
-Install dependencies if required:
-
-npm install
-
-Start the development server:
-
-npm run dev
-
-The frontend normally runs at:
-
-http://localhost:5173
-4. Start the Celery Worker
-
-From the backend directory with the virtual environment activated:
-
-celery -A celery_worker.celery worker --loglevel=info
-5. Start Celery Beat
-
-In another terminal:
-
-celery -A celery_worker.celery beat --loglevel=info
-Environment Variables
-
-Create a .env file inside the backend directory with the required email configuration:
-
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-google-app-password
-ADMIN_REPORT_EMAIL=admin-email@example.com
-
-Do not commit real email credentials or application passwords to a public repository.
-
-API Architecture
+## API Architecture
 
 The Vue.js frontend communicates with the Flask backend using REST APIs through Axios.
 
 Major API groups include:
 
-/api/auth - Authentication and registration.
-/api/admin - Admin dashboard, analytics, treks, users, staff, and bookings.
-/api/staff - Staff dashboard and assigned trek management.
-/api/trekker - Trek discovery, booking, history, profile, and CSV export.
-Project Highlights
-Three-role authentication and authorization system.
-Complete trek and booking management.
-Staff assignment and participant management.
-Redis API caching.
-Celery asynchronous tasks.
-Celery Beat scheduled tasks.
-Automated email reminders.
-Monthly Admin reports through email.
-Asynchronous CSV export.
-Interactive Chart.js analytics dashboard.
-Responsive Vue.js and Bootstrap user interface.
-Author
+* **`/api/auth`** — Authentication and registration.
+* **`/api/admin`** — Admin dashboard, analytics, treks, users, staff, and bookings.
+* **`/api/staff`** — Staff dashboard, assigned treks, and participant management.
+* **`/api/trekker`** — Trek discovery, booking, booking history, profile management, and CSV export.
 
-Ansh Rai
+The general request flow is:
+
+```text
+Vue.js Frontend
+       ↓
+     Axios
+       ↓
+Flask REST API
+       ↓
+Role / JWT Validation
+       ↓
+SQLAlchemy ORM
+       ↓
+SQLite Database
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+* Python 3.x
+* Node.js
+* npm
+* Redis
+* A Gmail account with an App Password for email functionality
+
+---
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repository-url>
+   cd <project-folder>
+   ```
+
+2. **Set up the backend environment:**
+   ```bash
+   cd backend
+   python -m venv env
+   source env/bin/activate
+   ```
+   *On Windows:*
+   ```bash
+   env\Scripts\activate
+   ```
+
+3. **Install backend dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Install frontend dependencies:**
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+
+---
+
+### Running the Application
+
+#### 1. Start Redis
+```bash
+redis-server
+```
+
+Verify that Redis is running:
+```bash
+redis-cli ping
+```
+*Expected output:*
+```text
+PONG
+```
+
+#### 2. Start the Flask Backend
+Navigate to the backend directory:
+```bash
+cd backend
+```
+
+Activate the virtual environment:
+```bash
+source env/bin/activate
+```
+
+Run the Flask application:
+```bash
+python app.py
+```
+
+The backend runs at:
+```text
+http://127.0.0.1:5001
+```
+
+#### 3. Start the Vue.js Frontend
+Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+Start the development server:
+```bash
+npm run dev
+```
+
+The frontend normally runs at:
+```text
+http://localhost:5173
+```
+
+#### 4. Start the Celery Worker
+From the `backend` directory with the virtual environment activated:
+```bash
+celery -A celery_worker.celery worker --loglevel=info
+```
+
+#### 5. Start Celery Beat
+In another terminal:
+```bash
+celery -A celery_worker.celery beat --loglevel=info
+```
+
+---
+
+## Environment Variables
+
+Create a `.env` file inside the `backend` directory for the email configuration:
+
+```env
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-google-app-password
+ADMIN_REPORT_EMAIL=admin-email@example.com
+```
+
+> **Note:** Do not commit real email credentials or Google App Passwords to a public repository.
+
+---
+
+## Project Highlights
+
+* Three-role authentication and authorization system.
+* JWT-based authentication.
+* Role-based access control.
+* Complete trek and booking management.
+* Staff assignment and participant management.
+* Search and filtering functionality.
+* Redis API caching.
+* Celery asynchronous background tasks.
+* Celery Beat scheduled tasks.
+* Automated trek reminder emails.
+* Monthly Admin activity reports.
+* Asynchronous CSV export.
+* Interactive Chart.js analytics dashboard.
+* Responsive Vue.js and Bootstrap user interface.
+
+---
+
+## Author
+
+**Ansh Rai**
