@@ -8,17 +8,22 @@ The application provides a centralized platform for managing trekking activities
 
 ## Screenshots
 
-### Home Page
-
-<p align="center">
-  <img src="./frontend/public/__________.png" alt="Trekking Management Application home page" width="700" />
-</p>
-
 ### Admin Dashboard
 
 <p align="center">
-  <img src="./frontend/public/__________.png" alt="Trekking Management Application admin dashboard" width="700" />
+  <img src="./frontend/public/admin.png" alt="Trekking Management Application admin dashboard" width="700" />
 </p>
+
+<table>
+  <tr>
+    <td>
+      <img src="./frontend/public/user.png" alt="Trekking Management Application user page" width="100%" />
+    </td>
+    <td>
+      <img src="./frontend/public/charts.png" alt="Trekking Management Application charts page" width="100%" />
+    </td>
+  </tr>
+</table>
 
 ---
 
